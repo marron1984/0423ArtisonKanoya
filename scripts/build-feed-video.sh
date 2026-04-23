@@ -62,8 +62,7 @@ build_image_slide() {
   local vf="scale=${W}*2:${H}*2:force_original_aspect_ratio=increase,crop=${W}*2:${H}*2"
   vf+=",zoompan=z='min(1+0.0006*on,1.08)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=${W}x${H}:fps=${FPS}"
   if [[ -n "$cap" && -f "$cap" ]]; then
-    vf+=",drawbox=x=0:y=ih-260:w=iw:h=260:color=black@0.45:t=fill"
-    vf+=",drawtext=textfile='${cap}':fontfile='${FONT}':fontsize=52:fontcolor=white:line_spacing=16:x=(w-text_w)/2:y=h-text_h-80"
+    vf+=",drawtext=textfile='${cap}':fontfile='${FONT}':fontsize=52:fontcolor=white:line_spacing=16:borderw=3:bordercolor=black@0.75:shadowcolor=black@0.55:shadowx=2:shadowy=2:x=(w-text_w)/2:y=h-text_h-80"
   fi
   vf+=",format=yuv420p"
   ffmpeg -y -hide_banner -loglevel error \
