@@ -27,7 +27,7 @@ OUT="$POST_DIR/feed.mp4"
 W=1080
 H=1920
 FPS=30
-FONT="/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf"
+FONT="/usr/share/fonts/opentype/ipafont-mincho/ipam.ttf"
 BG_DARK="0x0e1a12"   # 春日の杜の深緑
 BG_CREAM="0xf4efe4"  # 和紙の生成り
 
