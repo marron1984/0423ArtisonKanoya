@@ -25,7 +25,7 @@ SLIDES_DIR="$POST_DIR/slides"
 OUT="$POST_DIR/feed.mp4"
 
 W=1080
-H=1350
+H=1920
 FPS=30
 FONT="/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf"
 BG_DARK="0x0e1a12"   # 春日の杜の深緑
