@@ -55,17 +55,21 @@ build_text_slide() {
 build_image_slide() {
   # build_image_slide <image> <duration> <caption-file-or-empty> <out>
   local img="$1" dur="$2" cap="$3" out="$4"
-  local zoom_frames=$(( dur * FPS ))
-  local vf="scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},\
-zoompan=z='min(zoom+0.0008,1.08)':d=${zoom_frames}:s=${W}x${H}:fps=${FPS}"
+  # Subtle Ken Burns via zoompan with d=1 (1 output frame per input frame).
+  # Input is -loop 1 -t DUR at FPS, so we get DUR*FPS input frames and the
+  # zoom expression can ramp across them using 'on' (output frame index).
+  local max_frames=$(( dur * FPS ))
+  local vf="scale=${W}*2:${H}*2:force_original_aspect_ratio=increase,crop=${W}*2:${H}*2"
+  vf+=",zoompan=z='min(1+0.0006*on,1.08)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=${W}x${H}:fps=${FPS}"
   if [[ -n "$cap" && -f "$cap" ]]; then
-    vf+=",drawbox=x=0:y=ih-260:w=iw:h=260:color=black@0.45:t=fill,\
-drawtext=textfile='${cap}':fontfile='${FONT}':fontsize=52:fontcolor=white:line_spacing=16:x=(w-text_w)/2:y=h-th-80"
+    vf+=",drawbox=x=0:y=ih-260:w=iw:h=260:color=black@0.45:t=fill"
+    vf+=",drawtext=textfile='${cap}':fontfile='${FONT}':fontsize=52:fontcolor=white:line_spacing=16:x=(w-text_w)/2:y=h-text_h-80"
   fi
-  vf+=",fade=t=in:st=0:d=0.5,fade=t=out:st=$(awk "BEGIN{print ${dur}-0.5}"):d=0.5,format=yuv420p"
+  vf+=",format=yuv420p"
   ffmpeg -y -hide_banner -loglevel error \
-    -loop 1 -t "$dur" -i "$img" \
+    -loop 1 -framerate "$FPS" -t "$dur" -i "$img" \
     -vf "$vf" \
+    -frames:v "$max_frames" \
     -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -r "$FPS" \
     -movflags +faststart \
     "$out"
