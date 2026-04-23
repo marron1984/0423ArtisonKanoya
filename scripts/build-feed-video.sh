@@ -58,7 +58,7 @@ build_image_slide() {
   # Subtle Ken Burns via zoompan with d=1 (1 output frame per input frame).
   # Input is -loop 1 -t DUR at FPS, so we get DUR*FPS input frames and the
   # zoom expression can ramp across them using 'on' (output frame index).
-  local max_frames=$(( dur * FPS ))
+  local max_frames=$(awk -v d="$dur" -v f="$FPS" 'BEGIN{printf "%d", d*f}')
   local vf="scale=${W}*2:${H}*2:force_original_aspect_ratio=increase,crop=${W}*2:${H}*2"
   vf+=",zoompan=z='min(1+0.0006*on,1.08)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=${W}x${H}:fps=${FPS}"
   if [[ -n "$cap" && -f "$cap" ]]; then
@@ -82,24 +82,23 @@ declare -a PARTS=()
 if [[ ${#IMAGES[@]} -gt 0 ]]; then
   echo "Found ${#IMAGES[@]} image(s) — building photographic slideshow."
 
-  # Image slides, 4s each, captioned in rotation. Up to 5 images used.
-  # First image gets the title (slide1) as its top overlay via caption; all
-  # text is placed over photography — no solid-color title/closing cards.
+  # Image slides, 4.5s each. Captions overlay the photography — no solid
+  # title/closing cards.
   CAPTIONS=(
     "$SLIDES_DIR/slide1_title.txt"
     "$SLIDES_DIR/slide2_location.txt"
-    ""
     "$SLIDES_DIR/slide4_concept.txt"
     "$SLIDES_DIR/slide5_closing.txt"
   )
+  SLIDE_DUR=4.5
   i=0
   for img in "${IMAGES[@]}"; do
     cap="${CAPTIONS[$(( i % ${#CAPTIONS[@]} ))]}"
     out="$TMPDIR/$(printf '%02d' $((i + 10)))_img.mp4"
-    build_image_slide "$img" 4 "$cap" "$out"
+    build_image_slide "$img" "$SLIDE_DUR" "$cap" "$out"
     PARTS+=("$out")
     i=$((i + 1))
-    [[ $i -ge 5 ]] && break
+    [[ $i -ge ${#CAPTIONS[@]} ]] && break
   done
 else
   echo "No images in $IMAGES_DIR — building text-only preview."
