@@ -119,14 +119,47 @@ for p in "${PARTS[@]}"; do
   printf "file '%s'\n" "$p" >> "$LIST"
 done
 
-ffmpeg -y -hide_banner -loglevel error \
-  -f concat -safe 0 -i "$LIST" \
-  -f lavfi -i "anullsrc=channel_layout=stereo:sample_rate=48000" \
-  -shortest \
-  -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -r "$FPS" \
-  -c:a aac -b:a 128k \
-  -movflags +faststart \
-  "$OUT"
+# Resolve BGM: prefer post-local bgm.* then repo-root *.mp3/.m4a/.wav.
+BGM=""
+for candidate in "$POST_DIR"/bgm.mp3 "$POST_DIR"/bgm.m4a "$POST_DIR"/bgm.wav; do
+  [[ -f "$candidate" ]] && BGM="$candidate" && break
+done
+if [[ -z "$BGM" ]]; then
+  shopt -s nullglob
+  ROOT_BGMS=("$REPO_ROOT"/*.mp3 "$REPO_ROOT"/*.m4a "$REPO_ROOT"/*.wav)
+  shopt -u nullglob
+  [[ ${#ROOT_BGMS[@]} -gt 0 ]] && BGM="${ROOT_BGMS[0]}"
+fi
+
+if [[ -n "$BGM" ]]; then
+  echo "Using BGM: $BGM"
+  # First concat video-only to a temp file so we can read total duration.
+  VTMP="$TMPDIR/video_only.mp4"
+  ffmpeg -y -hide_banner -loglevel error \
+    -f concat -safe 0 -i "$LIST" -c copy "$VTMP"
+  DUR=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$VTMP")
+  FADEOUT_START=$(awk -v d="$DUR" 'BEGIN{printf "%.3f", d-1.5}')
+  ffmpeg -y -hide_banner -loglevel error \
+    -i "$VTMP" \
+    -stream_loop -1 -i "$BGM" \
+    -map 0:v:0 -map 1:a:0 \
+    -af "afade=t=in:st=0:d=1.2,afade=t=out:st=${FADEOUT_START}:d=1.5,volume=0.85" \
+    -shortest \
+    -c:v copy \
+    -c:a aac -b:a 192k -ar 48000 \
+    -movflags +faststart \
+    "$OUT"
+else
+  echo "No BGM found — using silent audio track."
+  ffmpeg -y -hide_banner -loglevel error \
+    -f concat -safe 0 -i "$LIST" \
+    -f lavfi -i "anullsrc=channel_layout=stereo:sample_rate=48000" \
+    -shortest \
+    -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -r "$FPS" \
+    -c:a aac -b:a 128k \
+    -movflags +faststart \
+    "$OUT"
+fi
 
 echo "Wrote: $OUT"
 ffprobe -v error -show_entries format=duration,size:stream=width,height,codec_name \
