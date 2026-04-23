@@ -82,16 +82,16 @@ declare -a PARTS=()
 
 if [[ ${#IMAGES[@]} -gt 0 ]]; then
   echo "Found ${#IMAGES[@]} image(s) — building photographic slideshow."
-  # Opening title
-  build_text_slide "$SLIDES_DIR/slide1_title.txt" 3 "$BG_DARK" "white" 96 "$TMPDIR/00_title.mp4"
-  PARTS+=("$TMPDIR/00_title.mp4")
 
-  # Up to 4 image slides, 3.5s each, captioned in rotation
+  # Image slides, 4s each, captioned in rotation. Up to 5 images used.
+  # First image gets the title (slide1) as its top overlay via caption; all
+  # text is placed over photography — no solid-color title/closing cards.
   CAPTIONS=(
+    "$SLIDES_DIR/slide1_title.txt"
     "$SLIDES_DIR/slide2_location.txt"
     "$SLIDES_DIR/slide3_intro.txt"
     "$SLIDES_DIR/slide4_concept.txt"
-    ""
+    "$SLIDES_DIR/slide5_closing.txt"
   )
   i=0
   for img in "${IMAGES[@]}"; do
@@ -100,12 +100,8 @@ if [[ ${#IMAGES[@]} -gt 0 ]]; then
     build_image_slide "$img" 4 "$cap" "$out"
     PARTS+=("$out")
     i=$((i + 1))
-    [[ $i -ge 4 ]] && break
+    [[ $i -ge 5 ]] && break
   done
-
-  # Closing
-  build_text_slide "$SLIDES_DIR/slide5_closing.txt" 4 "$BG_DARK" "white" 72 "$TMPDIR/99_closing.mp4"
-  PARTS+=("$TMPDIR/99_closing.mp4")
 else
   echo "No images in $IMAGES_DIR — building text-only preview."
   build_text_slide "$SLIDES_DIR/slide1_title.txt"    4 "$BG_DARK"  "white"    96 "$TMPDIR/01.mp4"
