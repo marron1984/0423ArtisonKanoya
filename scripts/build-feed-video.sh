@@ -88,7 +88,7 @@ if [[ ${#IMAGES[@]} -gt 0 ]]; then
   CAPTIONS=(
     "$SLIDES_DIR/slide1_title.txt"
     "$SLIDES_DIR/slide2_location.txt"
-    "$SLIDES_DIR/slide3_intro.txt"
+    ""
     "$SLIDES_DIR/slide4_concept.txt"
     "$SLIDES_DIR/slide5_closing.txt"
   )
